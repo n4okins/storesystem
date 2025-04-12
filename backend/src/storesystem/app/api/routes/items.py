@@ -1,7 +1,10 @@
+import datetime
+
 import postgrest
 from fastapi import APIRouter, HTTPException
+from pydantic import ValidationError
 from storesystem.app.api.supabase_client import fetch_data, get_table
-from storesystem.models import Item, RestockLog
+from storesystem.models import Item, ParchaseLog, RestockLog
 
 items_router = APIRouter(prefix="/items", tags=["items"])
 
@@ -37,4 +40,47 @@ def restock_item(restock_log: RestockLog):
         get_table("restock_log").insert(restock_log.model_dump_for_log()).execute()
         return {"message": "Success!"}
     except postgrest.exceptions.APIError as e:
-        return HTTPException(status_code=503, detail=e.details)
+        raise HTTPException(status_code=404, detail=e.details)
+
+
+@items_router.post("/parchase")
+def parchase_item(parchase_log: ParchaseLog):
+    try:
+        current_items = [
+            Item(**item)
+            for item in (
+                get_table("item_stocks")
+                .select("*")
+                .eq("item_id", parchase_log.item_id)
+                .execute()
+            ).data
+        ]
+    except ValidationError:
+        raise HTTPException(
+            status_code=404, detail=f"ItemID={parchase_log.item_id}の在庫は0です。"
+        )
+
+    if len(current_items) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail=f"ItemID={parchase_log.item_id}が存在しません。",
+        )
+    current_item = current_items[
+        0
+    ]  # item_idで取得したため要素が1つであることは保証されている
+    if current_item.item_quantity - parchase_log.item_quantity < 0:
+        raise HTTPException(
+            status_code=404, detail="購入する商品の在庫がマイナスになってしまいます！"
+        )
+    get_table("item_stocks").update(
+        dict(item_quantity=current_item.item_quantity - parchase_log.item_quantity)
+    ).eq("item_id", parchase_log.item_id).execute()
+    try:
+        get_table("parchase_log").insert(parchase_log.model_dump_for_log()).execute()
+        return {"message": "Success!"}
+    except postgrest.exceptions.APIError as e:
+        raise HTTPException(status_code=404, detail=e.details)
+
+
+@items_router.get("/diff")
+def diff_log_item(): ...

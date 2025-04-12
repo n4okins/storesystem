@@ -8,20 +8,10 @@ from pydantic import BaseModel, Field
 class Item(BaseModel):
     item_id: uuid.UUID
     item_name: Optional[str] = None
-    item_quantity: int
+    item_quantity: int = Field(..., gt=0)
 
 
-class ParchaseLog(BaseModel):
-    item_id: uuid.UUID
-    item_quantity: int
-    created_at: datetime = Field(default_factory=datetime.now)
-
-
-class RestockLog(BaseModel):
-    user_id: uuid.UUID
-    item_id: uuid.UUID
-    item_quantity: int
-    item_name: Optional[str]
+class LogBaseModel(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
 
     def model_dump_for_log(self) -> dict:
@@ -29,3 +19,15 @@ class RestockLog(BaseModel):
         if "item_name" in json:
             json.pop("item_name")
         return json
+
+
+class ParchaseLog(LogBaseModel):
+    item_id: uuid.UUID
+    item_quantity: int = Field(..., gt=0)
+
+
+class RestockLog(LogBaseModel):
+    user_id: uuid.UUID
+    item_id: uuid.UUID
+    item_quantity: int = Field(..., gt=0)
+    item_name: Optional[str]
