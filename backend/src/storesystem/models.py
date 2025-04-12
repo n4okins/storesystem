@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class Item(BaseModel):
     item_id: uuid.UUID
     item_name: Optional[str] = None
-    item_quantity: int = Field(..., gt=0)
+    item_quantity: int = Field(..., ge=0)
 
 
 class LogBaseModel(BaseModel):
