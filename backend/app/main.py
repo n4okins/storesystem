@@ -5,7 +5,7 @@ from storesystem.exceptions import (
     ParchaseItemTransactionException,
     RestockItemTransactionException,
 )
-from storesystem.models import ItemStockSchema, ParchaseLogSchema, RestockLogSchema
+from storesystem.models import Item, ParchaseLog, RestockLog
 
 # from fastapi.middleware.cors import CORSMiddleware
 from supabase import Client, create_client
@@ -20,7 +20,7 @@ def _read_item_stock():
     return supabase.table("item_stock").select("*").execute()
 
 
-def _write_parchase_log(parchase_log: ParchaseLogSchema):
+def _write_parchase_log(parchase_log: ParchaseLog):
     try:
         return (
             supabase.table("parchase_log")
@@ -31,7 +31,7 @@ def _write_parchase_log(parchase_log: ParchaseLogSchema):
         raise ParchaseItemTransactionException(f"An Occurred Error!, {e}")
 
 
-def _write_restock_log(restock_log: RestockLogSchema):
+def _write_restock_log(restock_log: RestockLog):
     try:
         return (
             supabase.table("restock_log")
@@ -48,17 +48,17 @@ def root():
 
 
 @app.get("/list_item")
-def list_item() -> list[ItemStockSchema]:
+def list_item() -> list[Item]:
     """全在庫情報の取得(残数0も含む)
     Returns:
         list[ItemStockSchema]: 在庫情報
     """
     response = _read_item_stock()
-    return [ItemStockSchema(**item) for item in response.data]
+    return [Item(**item) for item in response.data]
 
 
 @app.get("/diff_stock")
-def diff_stock() -> list[ItemStockSchema]:
+def diff_stock() -> list[Item]:
     """各itemについて、前回Add時からの差分を取る
     Returns:
         list[ItemStockSchema]: 差分？
@@ -74,7 +74,7 @@ def parchase_item(item_id: str, item_quantity: int) -> None:
         item_quantity (int): 入荷した個数 (int)
 
     """
-    _write_parchase_log(ParchaseLogSchema(item_id=item_id, item_quantity=item_quantity))
+    _write_parchase_log(ParchaseLog(item_id=item_id, item_quantity=item_quantity))
     return None
 
 
@@ -87,6 +87,6 @@ def restock_item(user_id: str, item_id: str, item_quantity: int) -> None:
         item_quantity (int): 入荷した個数 (int)
     """
     _write_restock_log(
-        RestockLogSchema(user_id=user_id, item_id=item_id, item_quantity=item_quantity)
+        RestockLog(user_id=user_id, item_id=item_id, item_quantity=item_quantity)
     )
     return None

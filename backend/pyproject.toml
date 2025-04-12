@@ -26,4 +26,4 @@ dev = [
 
 
 [tool.taskipy.tasks]
-serve = "uv run --env-file .env uvicorn main:app --reload --port 8878 --host=0.0.0.0"
+serve = "uv run --env-file .env uvicorn app.main:app --reload --port 8878 --host=0.0.0.0"
