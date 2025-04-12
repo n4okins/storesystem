@@ -1,13 +1,14 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 
 class Item(BaseModel):
-    item_name: str
+    item_id: uuid.UUID
+    item_name: Optional[str] = None
     item_quantity: int
-    item_id: uuid.UUID = Field(default_factory=uuid.uuid4)
 
 
 class ParchaseLog(BaseModel):
@@ -20,4 +21,11 @@ class RestockLog(BaseModel):
     user_id: uuid.UUID
     item_id: uuid.UUID
     item_quantity: int
+    item_name: Optional[str]
     created_at: datetime = Field(default_factory=datetime.now)
+
+    def model_dump_for_log(self) -> dict:
+        json = self.model_dump(mode="json")
+        if "item_name" in json:
+            json.pop("item_name")
+        return json
