@@ -2,7 +2,6 @@
 name = "storesystem"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.12",
@@ -11,7 +10,7 @@ dependencies = [
 ]
 
 [project.scripts]
-storesystem = "storesystem:main"
+storesystem = "backend:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -27,4 +26,4 @@ dev = [
 
 
 [tool.taskipy.tasks]
-serve = "uv run --env-file .env uvicorn main:app --reload --port 8878"
+serve = "uv run --env-file .env uvicorn main:app --reload --port 8878 --host=0.0.0.0"
